@@ -1,5 +1,4 @@
 pragma solidity >=0.8.0;
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "./BlockshipFractionManager.sol";
 
 contract NFTMarketPlace{
@@ -9,8 +8,6 @@ contract NFTMarketPlace{
     }
     
     FractionsManager fm = FractionsManager(MPAddress);
-    ERC1155 e5 = ERC1155(fmadd);
-
         
         address payable MPAddress = payable(address(this));
         address payable fmadd = fm.FMAddress();
