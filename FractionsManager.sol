@@ -10,6 +10,7 @@ contract FractionsManager is ERC1155{
     
     address payable public FMAddress = payable(address(this)); 
     
+    //mint function overriding giving error
     function _mint( address to, uint id, uint amount, bytes memory data) public override{
        
     }
