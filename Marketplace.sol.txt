@@ -118,7 +118,7 @@ contract NFTMarketPlace{
         CounterForEnlistedSellingTokens++;
         NftIdChecker[nftId] = true;
         
-        //(MPAddress, nftId, shareOfNFT, "");
+        //_mint function to be used here(MPAddress, nftId, shareOfNFT, "");
         
         SellerDataStruct.push(SellerData(CounterForEnlistedSellingTokens, name, symbol, nftAddress, nftId, a, pr, true));
         SellerDataMapping[nftId]= SellerData(CounterForEnlistedSellingTokens, name, symbol, nftAddress, nftId, a, pr, true);
