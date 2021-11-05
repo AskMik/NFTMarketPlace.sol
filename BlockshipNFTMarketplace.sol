@@ -5,9 +5,10 @@ contract NFTMarketPlace{
     
     constructor() public{
         InterfaceSupport[0x80ac58cd] = true;
-    }
+    }  
     
     FractionsManager fm = FractionsManager(MPAddress);
+    
         
         address payable MPAddress = payable(address(this));
         address payable fmadd = fm.FMAddress();
@@ -26,39 +27,41 @@ contract NFTMarketPlace{
         
             
         uint CounterForEnlistedSellingTokens = 0; 
-        uint sellingTime = block.timestamp * 30 days;
+        uint SellingTimeLimit = 30 days;
             
             
     
     struct SellerData{
         
         uint Counter;
+        address payable SenderAddress;
         string nameOfToken;
         string SymbolOfToken;
         address TokenAddress;
         uint TokenID;
-        uint ShareOFToken;
+        uint ShareOfToken;
         uint PriceOfTokenShare;
+        uint SharesRemain;
+        uint TimeOfSelling;
         bool ShareisForSale;
         
     }   
     
    
- 
+    address payable[] SellerAddresses;
     SellerData[] SellerDataStruct;
     mapping(uint => uint) TokenTrackerMapping;
     
-    
-    
+
     
     event TokenForSale(
         string ename,
-        string eId,
+        uint eId,
         uint esharesOfTokenIssued,
         uint etime
         );
 
-    mapping(uint => SellerData) SellerDataMapping;
+    mapping(uint => SellerData) public SellerDataMapping;
     mapping(address => bool) AddressIdentifier;
     mapping(bytes4 => bool) private InterfaceSupport;
     mapping(address => bool) private AddressConfirmation;
@@ -109,17 +112,19 @@ contract NFTMarketPlace{
         bytes memory Enlisted = "your shares have been enlisted";
         
         MPAddress.transfer(msg.value);
+        uint SellTime = block.timestamp;
         
         fm.safeTransferFrom(payable(msg.sender), fmadd, nftId, shareOfNFT, Enlisted );
         
         CounterForEnlistedSellingTokens++;
         NftIdChecker[nftId] = true;
         
-        //_mint function to be used here(MPAddress, nftId, shareOfNFT, "");
+        fm.mint(fmadd, nftId, shareOfNFT, "");
+        SellerAddresses.push(payable(msg.sender));
+        SellerDataStruct.push(SellerData(CounterForEnlistedSellingTokens, payable(msg.sender), name, symbol, nftAddress, nftId, a, pr, a, SellTime, true));
+        SellerDataMapping[nftId]= SellerData(CounterForEnlistedSellingTokens, payable(msg.sender), name, symbol, nftAddress, nftId, a, pr, a, SellTime, true);
         
-        SellerDataStruct.push(SellerData(CounterForEnlistedSellingTokens, name, symbol, nftAddress, nftId, a, pr, true));
-        SellerDataMapping[nftId]= SellerData(CounterForEnlistedSellingTokens, name, symbol, nftAddress, nftId, a, pr, true);
-        
+        emit TokenForSale(name, nftId, a, SellTime);
         
         
         }
@@ -127,14 +132,31 @@ contract NFTMarketPlace{
     
         
     function GetTheSharesLeftForBuying(uint IdForToken) public view returns(uint){
-        return (SellerDataMapping[IdForToken].ShareOFToken);
+        return (SellerDataMapping[IdForToken].SharesRemain);
     }
 
-    function BuySomeshares(address _receiverAddress, uint TokenIdYouWantToBuySharesOf, uint NumberOfShares) public payable{
-        require(NftIdChecker[TokenIdYouWantToBuySharesOf] = true);
-        require( msg.value == SellerDataMapping[TokenIdYouWantToBuySharesOf].PriceOfTokenShare);
+    function BuySomeshares( uint TokenIdYouWantToBuySharesOf, uint NumberOfShares) public payable{
+        require(NftIdChecker[TokenIdYouWantToBuySharesOf] = true, "TokenID not available for Sale");
+        require( msg.value == (SellerDataMapping[TokenIdYouWantToBuySharesOf].PriceOfTokenShare) * NumberOfShares);
+        fm.mint(msg.sender, TokenIdYouWantToBuySharesOf, NumberOfShares, "" );
         
-        
+        SellerDataMapping[TokenIdYouWantToBuySharesOf].SenderAddress.transfer(NumberOfShares * SellerDataMapping[TokenIdYouWantToBuySharesOf].PriceOfTokenShare);
+        uint RemainingShares = (SellerDataMapping[TokenIdYouWantToBuySharesOf].PriceOfTokenShare) - NumberOfShares;
+        SellerDataMapping[TokenIdYouWantToBuySharesOf].SharesRemain = RemainingShares;
         
        }
-}
+       
+    function ReturningShares( uint NFTID) public returns(bool){
+    
+            require( SellerDataMapping[NFTID].TimeOfSelling> SellingTimeLimit);
+            fm.mint(SellerDataMapping[NFTID].SenderAddress, SellerDataMapping[NFTID].TokenID, SellerDataMapping[NFTID].SharesRemain, "");
+            delete SellerDataMapping[NFTID];
+            
+            return true;
+        }
+        }
+    
+
+
+
+        
